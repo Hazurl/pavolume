@@ -27,7 +27,6 @@ Options:
 from pulseaudio import PulseAudio
 from docopt import docopt
 from configparser import ConfigParser
-from gi.repository import Notify
 import os
 import math
 import subprocess
@@ -35,23 +34,6 @@ import subprocess
 square_full = "\u25a0"
 square_empty = "\u25a1"
 square_cross = "\u25a8"
-
-def progress_bar(v_min, v_max, v_current, increment, full_char=square_full, empty_char=square_empty):
-	"""Render a progress bar out of characters"""
-	v_range = (v_max - v_min)
-	filled = math.floor((v_current - v_min) / v_range  * increment)
-	empty = increment - filled
-
-	overfilled = 0
-	if empty < 0:
-		empty = 0
-		overfilled = filled - increment
-		filled = increment
-
-	if overfilled:
-		return (full_char * filled) + "|" + (full_char * overfilled)
-	else:
-		return (full_char * filled) + (empty_char * empty)
 
 
 scriptdir = os.path.dirname(os.path.realpath(__file__))
@@ -73,19 +55,16 @@ volume_min = int(config.get("Sink", "volume_min"))
 volume_increment = int(config.get("Sink", "volume_increment"))
 blip_sound = config.get("Sounds", "blip")
 
-Notify.init("pavolume")
-
 def show():
 	percent = (pa.get_volume(sink) - volume_min) / (volume_max - volume_min) * 100
 
 	if pa.get_mute(sink):
 		title = "Muted %2.0f%%" % percent
-		pb = progress_bar(volume_min, volume_max, pa.get_volume(sink), volume_increment, full_char=square_cross)
 	else:
 		title = "Volume %2.0f%%" % percent
-		pb = progress_bar(volume_min, volume_max, pa.get_volume(sink), volume_increment)
 
-	Notify.Notification.new(title, pb, "dialog-information").show()
+	subprocess.run(["notify-send", title, "-i", "audio-volume-high", "-h", "int:value:" + str(int(percent)), "-h", "string:x-canonical-private-synchronous:pavolume", "--replace-id=165165137"])
+
 
 def volume_set(new_volume, noshow=False, quiet=False):
 	pa.set_volume(int(new_volume), sink)
