@@ -67,6 +67,7 @@ config.read([
 
 sink = config.get("Sink", "default_sink")
 if sink == "None": sink = None
+
 volume_max = int(config.get("Sink", "volume_max"))
 volume_min = int(config.get("Sink", "volume_min"))
 volume_increment = int(config.get("Sink", "volume_increment"))
@@ -120,6 +121,10 @@ if __name__ == "__main__":
 
 	pa = PulseAudio()
 	pa.update()
+
+	pa_default_sink = pa.get_default_sink()
+	if pa_default_sink and not sink:
+		sink = pa_default_sink
 
 	if args['show']:
 		show()
